@@ -48,12 +48,16 @@ input {
 canvas {
     border: 1px dashed #ccc;
     background: #fff;
-    width: var(--w);
-    height: var(--h);
-    max-width: 100%; /* ให้ย่อตามหน้าจอมือถือได้ตอนแสดงผล */
-    touch-action: none; 
+    width: 100%;              /* ให้ย่อตามหน้าจอ iPad/มือถืออัตโนมัติ */
+    max-width: 1134px;        /* ไม่เกินสเปกสูงสุด */
+    aspect-ratio: 1134 / 284; /* รักษาสัดส่วน กว้าง:ยาว ให้เป๊ะเสมอ */
+    
+    /* บล็อค Gestures ของ Apple Pencil และการคลุมดำใน Safari */
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
-
 button {
     margin: 6px;
     padding: 8px 14px;
@@ -89,13 +93,17 @@ const stack = document.getElementById("stack");
 function setupCanvas(canvas) {
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     
-    // กำหนดขนาดจริงของ Canvas ให้คูณด้วย Ratio ของจอ
-    canvas.width = W * ratio;
-    canvas.height = H * ratio;
+    // ดึงขนาดความกว้าง/ยาว "จริง" บนหน้าจอที่ถูก CSS ย่อลงมา
+    const displayWidth = canvas.offsetWidth;
+    const displayHeight = canvas.offsetHeight;
     
-    // กำหนดขนาดแสดงผลผ่าน CSS
-    canvas.style.width = W + "px";
-    canvas.style.height = H + "px";
+    // ตั้งค่าความละเอียด Canvas ให้คูณด้วย Retina Ratio จากขนาดจริง
+    canvas.width = displayWidth * ratio;
+    canvas.height = displayHeight * ratio;
+
+    // เคลียร์ inline style ออก เพราะเราให้ CSS (aspect-ratio) จัดการความกว้าง/สูงแล้ว
+    canvas.style.width = "";
+    canvas.style.height = "";
 
     const ctx = canvas.getContext("2d");
     ctx.scale(ratio, ratio);
