@@ -145,129 +145,134 @@ function clearPad(i){
     pads[i].pad.clear();
 }
 
-function getBounds(canvas){
-
-    const ratio = window.devicePixelRatio || 1;
-
-    const ctx = canvas.getContext("2d");
-
-    const img = ctx.getImageData(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    const data = img.data;
-
-    let minX = canvas.width;
-    let minY = canvas.height;
-
-    let maxX = 0;
-    let maxY = 0;
-
-    let found = false;
-
-    for(let y=0;y<canvas.height;y++){
-
-        for(let x=0;x<canvas.width;x++){
-
-            if(data[(y*canvas.width+x)*4+3]>0){
-
-                found=true;
-
-                if(x<minX) minX=x;
-                if(y<minY) minY=y;
-
-                if(x>maxX) maxX=x;
-                if(y>maxY) maxY=y;
-
-            }
-
-        }
-
-    }
-
-    if(!found) return null;
-
-    return{
-
-        x:minX/ratio,
-
-        y:minY/ratio,
-
-        w:(maxX-minX)/ratio,
-
-        h:(maxY-minY)/ratio
-
-    };
-
-}
-
-function makeCentered(canvas){
-
-    const ratio = window.devicePixelRatio || 1;
-
-    const out = document.createElement("canvas");
-
-    out.width = W;
-    out.height = H;
-
-    const ctx = out.getContext("2d");
-
-    const b = getBounds(canvas);
-
-    if(!b) return out;
-
-    const padding = 18;
-
-    const sx = Math.max(0,b.x-padding);
-    const sy = Math.max(0,b.y-padding);
-
-    const sw = Math.min(
-        W,
-        b.w+padding*2
-    );
-
-    const sh = Math.min(
-        H,
-        b.h+padding*2
-    );
-
-    const dx = (W-sw)/2;
-    const dy = (H-sh)/2;
-
-    ctx.imageSmoothingEnabled = true;
-
-    ctx.imageSmoothingQuality = "high";
-    
-    ctx.drawImage(
-
-        canvas,
-
-        sx*ratio,
-        sy*ratio,
-
-        sw*ratio,
-        sh*ratio,
-
-        dx,
-        dy,
-
-        sw,
-        sh
-
-    );
-
-    return out;
-
-}
 
 // --- DPI metadata ---
 function setDPI(blob,dpi){
     return blob; // simplified (browser ignores true DPI visually)
 }
 
+function getStrokeBounds(data){
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    data.forEach(stroke=>{
+
+        stroke.points.forEach(p=>{
+
+            if(p.x<minX) minX=p.x;
+            if(p.y<minY) minY=p.y;
+
+            if(p.x>maxX) maxX=p.x;
+            if(p.y>maxY) maxY=p.y;
+
+        });
+
+    });
+
+    if(minX===Infinity) return null;
+
+    return{
+
+        minX,
+        minY,
+        maxX,
+        maxY
+
+    };
+
+}    
+
+function createExportCanvas(signaturePad){
+
+    const data = signaturePad.toData();
+
+    if(data.length===0){
+
+        const out=document.createElement("canvas");
+
+        out.width=W;
+        out.height=H;
+
+        return out;
+
+    }
+
+    let minX=Infinity;
+    let minY=Infinity;
+    let maxX=-Infinity;
+    let maxY=-Infinity;
+
+    // หา Bounding Box
+    data.forEach(stroke=>{
+
+        stroke.points.forEach(p=>{
+
+            if(p.x<minX) minX=p.x;
+            if(p.y<minY) minY=p.y;
+
+            if(p.x>maxX) maxX=p.x;
+            if(p.y>maxY) maxY=p.y;
+
+        });
+
+    });
+
+    const padding=20;
+
+    const signWidth=maxX-minX;
+    const signHeight=maxY-minY;
+
+    // ตำแหน่งใหม่ให้อยู่กึ่งกลาง
+    const offsetX=(W-signWidth)/2-minX;
+    const offsetY=(H-signHeight)/2-minY;
+
+    // สร้างข้อมูลใหม่
+    const newData=data.map(stroke=>{
+
+        return{
+
+            ...stroke,
+
+            points:stroke.points.map(p=>({
+
+                ...p,
+
+                x:p.x+offsetX,
+
+                y:p.y+offsetY
+
+            }))
+
+        };
+
+    });
+
+    const out=document.createElement("canvas");
+
+    out.width=W;
+    out.height=H;
+
+    const exportPad=new SignaturePad(out,{
+
+        penColor:"#000",
+
+        backgroundColor:"rgba(255,255,255,0)",
+
+        minWidth:signaturePad.minWidth,
+
+        maxWidth:signaturePad.maxWidth
+
+    });
+
+    exportPad.fromData(newData);
+
+    return out;
+
+}
+    
 function save(i){
 
     const pad = pads[i].pad;
@@ -276,11 +281,11 @@ function save(i){
         return;
     }
 
-    const canvas = pads[i].canvas;
+const exportCanvas = createExportCanvas(
+    pads[i].pad
+);
 
-    const centered = makeCentered(canvas);
-
-    centered.toBlob(blob=>{
+    exportCanvas.toBlob(blob=>{
 
         const name = (document.getElementById("filename").value || "signature")
             .replace(/[\\/:*?"<>|]/g,"");
