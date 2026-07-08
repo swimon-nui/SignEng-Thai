@@ -334,23 +334,23 @@ const exportCanvas = createExportCanvas(
     pads[i].pad
 );
 
-exportCanvas.toBlob(async (blob)=>{
+    exportCanvas.toBlob(blob=>{
 
-    const png600 = await setPngDpi(blob,600);
+        const name = (document.getElementById("filename").value || "signature")
+            .replace(/[\\/:*?"<>|]/g,"");
 
-    const url = URL.createObjectURL(png600);
+        const url = URL.createObjectURL(blob);
 
-    const a=document.createElement("a");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name + "_" + pads[i].suffix + ".png";
 
-    a.href=url;
+        a.click();
 
-    a.download=filename+".png";
+        URL.revokeObjectURL(url);
 
-    a.click();
+    });
 
-    URL.revokeObjectURL(url);
-
-},"image/png");
 
 }
 
