@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Signature Reg TU</title>
+    <title>Signature PRO Hybrid V2</title>
 
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@5.0.10/dist/signature_pad.umd.min.js"></script>
 
@@ -148,7 +148,7 @@
 
     <div id="toast">ข้อความแจ้งเตือน</div>
 
-    <h2>Signature Reg TU</h2>
+    <h2>Signature PRO Hybrid V2</h2>
     <p style="color:#666; margin-top:-10px; margin-bottom:20px;">ส่งออกไฟล์ขนาด 1134x284 พิกเซล @ 600 DPI</p>
 
     <input id="filename" placeholder="ตั้งชื่อไฟล์ (เช่น doc_01)">
@@ -186,6 +186,16 @@
             
             const ctx = canvas.getContext("2d");
             ctx.scale(ratio, ratio);
+
+            // --- คำนวณขนาดปากกา 0.7mm @ 600DPI (16.535 พิกเซล) ให้คงที่ทุกขนาดหน้าจอ ---
+            const targetThickness = 16.535; // ความหนาเป้าหมายในไฟล์รูปภาพ
+            const scaleToExport = canvas.width / EXPORT_W; // หาอัตราส่วนหน้าจอที่กำลังวาด กับ 1134px
+            const dynamicPenSize = targetThickness * scaleToExport;
+
+            // กำหนดความหนาให้สัมพันธ์กับหน้าจอ (ให้มีน้ำหนักอ่อน-เข้ม ตามความเร็วในการตวัดนิดหน่อยให้ดูเป็นธรรมชาติ)
+            padObj.pad.minWidth = dynamicPenSize * 0.8; 
+            padObj.pad.maxWidth = dynamicPenSize * 1.1; 
+            // หากต้องการให้เส้นหนา "เท่ากันเป๊ะ" ตลอดเส้น ให้ใช้: padObj.pad.minWidth = dynamicPenSize; padObj.pad.maxWidth = dynamicPenSize;
             
             // นำข้อมูลกลับมาวาดใหม่
             padObj.pad.fromData(data);
@@ -206,8 +216,8 @@
                     <canvas id="c${index}"></canvas>
                 </div>
                 <div class="actions">
-                    <button class="clear" onclick="clearPad(${index})">Clear</button>
-                    <button class="save" onclick="save(${index})">บันทึก</button>
+                    <button class="clear" onclick="clearPad(${index})">ล้างลายเซ็น</button>
+                    <button class="save" onclick="save(${index})">บันทึกรูปภาพ</button>
                 </div>
             `;
 
@@ -215,8 +225,7 @@
 
             const canvas = document.getElementById("c" + index);
             const pad = new SignaturePad(canvas, {
-                minWidth: 1.2,
-                maxWidth: 4.5,
+                // ลบ minWidth และ maxWidth แบบตายตัวออก เพราะเราตั้งค่าอัตโนมัติใน resizeCanvas แล้ว
                 penColor: "#000",
                 backgroundColor: "rgba(255,255,255,0)"
             });
