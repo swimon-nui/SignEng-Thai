@@ -20,27 +20,9 @@
         }
 
         h2 {
-            margin-top: 0;
+            margin-top: 20px;
             color: #1a1a1a;
         }
-
-        //input {
-            width: 100%;
-            max-width: 500px;
-            padding: 14px;
-            font-size: 18px;
-            text-align: center;
-            border-radius: 8px;
-            border: 2px solid #cbd5e1;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #3b82f6;
-        } ..//
 
         .stack {
             display: flex;
@@ -149,9 +131,7 @@
     <div id="toast">ข้อความแจ้งเตือน</div>
 
     <h2>Signature Reg TU</h2>
-    <p style="color:#666; margin-top:-10px; margin-bottom:20px;">ส่งออกไฟล์ขนาด 1134x284 พิกเซล @ 600 DPI</p>
-
-    //<input id="filename" placeholder="ตั้งชื่อไฟล์ (เช่น doc_01)">
+    <p style="color:#666; margin-top:-10px; margin-bottom:30px;">ส่งออกไฟล์ขนาด 1134x284 พิกเซล @ 600 DPI</p>
 
     <div class="stack" id="stack"></div>
 
@@ -365,13 +345,13 @@
                 // ฝังข้อมูล 600 DPI ลงในไฟล์ PNG
                 const finalBlob = await setDPI(blob, EXPORT_DPI);
 
-                const name = (document.getElementById("filename").value || "signature")
-                    .replace(/[\\/:*?"<>|]/g, "");
+                // ตั้งชื่อไฟล์เริ่มต้นเมื่อกดเซฟ
+                const name = "signature";
 
                 const url = URL.createObjectURL(finalBlob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = name + "_" + pads[i].suffix + ".png";
+                a.download = name + ".png";
 
                 a.click();
                 URL.revokeObjectURL(url);
@@ -381,10 +361,9 @@
             }, "image/png");
         }
 
-        // สร้างพื้นที่ลายเซ็น 2 ช่อง
-          //createPad(0, "ลายเซ็นภาษาไทย", "TH");
-          //createPad(1, "Signature English", "EN");
+        // สร้างพื้นที่ลายเซ็นช่องเดียว (สามารถใช้เซ็นได้ทั้งภาษาไทยและอังกฤษ)
         createPad(0, "ลายเซ็น (Signature)", "SIGN");
+
     </script>
 </body>
 
